@@ -1,7 +1,6 @@
 import logging
 from functools import wraps
 from pprint import pprint
-import os
 
 import requests
 
@@ -74,29 +73,18 @@ def get_href_file_by_id(product_id):
     return review_result['data']
 
 
-def download_image(file_name, url, source_path):
-    response = requests.get(url, verify=False)
-    response.raise_for_status()
-
-    file_path = os.path.join(source_path, file_name)
-    with open(file_path, 'wb') as file:
-        file.write(response.content)
-    logger.info(f'download file: {file_path}')
-    return file_path
-
-
-def create_cart():
+def create_cart(reference, product_id, quantity):
     headers = get_headers()
     headers['Content-Type'] = 'application/json'
 
     data = {
         'data': {
-            "id": "b05a9593-73ee-42af-88ef-c35ee4154ef0",
-            "type": "cart_item",
-            "quantity": 1}
+            'id': product_id,
+            'type': 'cart_item',
+            'quantity': quantity}
     }
 
-    response = requests.post('https://api.moltin.com/v2/carts/qwerty/items/', headers=headers, json=data)
+    response = requests.post(f'https://api.moltin.com/v2/carts/{reference}/items/', headers=headers, json=data)
     print(response.text)
     response.raise_for_status()
     review_result = response.json()

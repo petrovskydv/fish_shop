@@ -12,7 +12,7 @@ _database = None
 logger = logging.getLogger(__name__)
 
 
-def handle_menu(bot, update):
+def start(bot, update):
     """
     Хэндлер для состояния START.
     """
@@ -23,7 +23,7 @@ def handle_menu(bot, update):
     elif update.callback_query:
         update.callback_query.message.reply_text(text='Привет!', reply_markup=reply_markup)
 
-    return 'HANDLE_DESCRIPTION'
+    return 'HANDLE_MENU'
 
 
 def get_keyboard_with_products():
@@ -36,12 +36,22 @@ def get_keyboard_with_products():
     return reply_markup
 
 
-def handle_description(bot, update):
-    keyboard = [[InlineKeyboardButton("Назад", callback_data='back')]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
+def handle_menu(bot, update):
     query = update.callback_query
     product = online_shop.get_product(query.data)
+
+    keyboard = [
+        [
+            InlineKeyboardButton('1 кг', callback_data=f'{product["id"]},{1}'),
+            InlineKeyboardButton('5 кг', callback_data=f'{product["id"]},{5}'),
+            InlineKeyboardButton('10 кг', callback_data=f'{product["id"]},{10}')
+        ],
+        [
+            InlineKeyboardButton("Назад", callback_data='back')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     text = '\n'.join([product['description'], product['meta']['display_price']['with_tax']['formatted']])
     try:
         image_id = product['relationships']['main_image']['data']['id']
@@ -52,6 +62,15 @@ def handle_description(bot, update):
     except KeyError:
         bot.edit_message_text(text=text, chat_id=query.message.chat_id, message_id=query.message.message_id,
                               reply_markup=reply_markup)
+
+    return 'HANDLE_DESCRIPTION'
+
+
+def handle_description(bot, update):
+    query = update.callback_query
+    product_id, quantity = query.data.split(',')
+    print(f'добавляем корзину {query.message.chat.id}')
+    online_shop.create_cart(query.message.chat.id, product_id, int(quantity))
 
     return 'HANDLE_DESCRIPTION'
 
@@ -79,14 +98,14 @@ def handle_users_reply(bot, update):
     else:
         return
     if user_reply == '/start':
-        user_state = 'HANDLE_MENU'
+        user_state = 'START'
     elif user_reply == 'back':
         user_state = 'HANDLE_MENU'
     else:
         user_state = db.get(chat_id).decode('utf-8')
 
     states_functions = {
-        # 'START': start,
+        'START': start,
         'HANDLE_MENU': handle_menu,
         'HANDLE_DESCRIPTION': handle_description
     }
@@ -94,11 +113,11 @@ def handle_users_reply(bot, update):
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
     # Оставляю этот try...except, чтобы код не падал молча.
     # Этот фрагмент можно переписать.
-    try:
-        next_state = state_handler(bot, update)
-        db.set(chat_id, next_state)
-    except Exception as err:
-        print(err)
+    # try:
+    next_state = state_handler(bot, update)
+    db.set(chat_id, next_state)
+    # except Exception as err:
+    #     print(err)
 
 
 def get_database_connection():
