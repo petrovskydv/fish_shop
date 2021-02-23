@@ -91,24 +91,26 @@ def create_cart(reference, product_id, quantity):
     pprint(review_result)
 
 
-def get_cart():
+def get_cart(reference):
     headers = get_headers()
 
-    response = requests.get('https://api.moltin.com/v2/carts/qwerty', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=headers)
     print(response.text)
     response.raise_for_status()
     review_result = response.json()
     pprint(review_result)
+    return review_result
 
 
-def get_cart_items():
+def get_cart_items(reference):
     headers = get_headers()
 
-    response = requests.get('https://api.moltin.com/v2/carts/qwerty/items', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=headers)
     print(response.text)
     response.raise_for_status()
     review_result = response.json()
     pprint(review_result)
+    return review_result['data']
 
 
 def get_access_token(client_id=None):

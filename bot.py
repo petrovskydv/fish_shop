@@ -32,6 +32,7 @@ def get_keyboard_with_products():
     for product in products:
         good = InlineKeyboardButton(product['description'], callback_data=product['id'])
         keyboard.append([good])
+    keyboard.append([InlineKeyboardButton("Корзина", callback_data='cart')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     return reply_markup
 
@@ -47,6 +48,7 @@ def handle_menu(bot, update):
             InlineKeyboardButton('10 кг', callback_data=f'{product["id"]},{10}')
         ],
         [
+            InlineKeyboardButton("Корзина", callback_data='cart'),
             InlineKeyboardButton("Назад", callback_data='back')
         ]
     ]
@@ -71,6 +73,28 @@ def handle_description(bot, update):
     product_id, quantity = query.data.split(',')
     print(f'добавляем корзину {query.message.chat.id}')
     online_shop.create_cart(query.message.chat.id, product_id, int(quantity))
+
+    return 'HANDLE_DESCRIPTION'
+
+
+def handle_cart(bot, update):
+    query = update.callback_query
+    print(f'читаем корзину {query.message.chat.id}')
+    products = online_shop.get_cart_items(query.message.chat.id)
+    cart_text = ''
+    for product in products:
+        product_price = product['meta']['display_price']['with_tax']
+        text = '\n'.join(
+            [
+                product['description'],
+                product_price['unit']['formatted'],
+                f'{product["quantity"]}кг на сумму {product_price["value"]["formatted"]}'
+            ])
+        cart_text = '\n\n'.join([cart_text, text])
+    cart = online_shop.get_cart(query.message.chat.id)
+    total = cart['data']['meta']['display_price']['with_tax']['formatted']
+    cart_text = '\n\n'.join([cart_text, f'Всего: {total}'])
+    update.callback_query.message.reply_text(text=cart_text)
 
     return 'HANDLE_DESCRIPTION'
 
@@ -100,14 +124,17 @@ def handle_users_reply(bot, update):
     if user_reply == '/start':
         user_state = 'START'
     elif user_reply == 'back':
-        user_state = 'HANDLE_MENU'
+        user_state = 'START'
+    elif user_reply == 'cart':
+        user_state = 'HANDLE_CART'
     else:
         user_state = db.get(chat_id).decode('utf-8')
 
     states_functions = {
         'START': start,
         'HANDLE_MENU': handle_menu,
-        'HANDLE_DESCRIPTION': handle_description
+        'HANDLE_DESCRIPTION': handle_description,
+        'HANDLE_CART': handle_cart
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
