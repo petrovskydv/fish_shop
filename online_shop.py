@@ -15,7 +15,8 @@ def validate_access_token(fnc):
         try:
             res = fnc(*args, **kwargs)
         except requests.exceptions.HTTPError:
-            # TODO сделать проверку на статус 401
+            # TODO сделать проверку на статус 401 токен не действительный
+            # TODO сделать проверку на статус 409 добавление существующего пользователя
             get_access_token()
             res = fnc(*args, **kwargs)
         return res
@@ -72,6 +73,7 @@ def get_href_file_by_id(product_id):
     return review_result['data']
 
 
+@validate_access_token
 def create_cart(reference, product_id, quantity):
     headers = get_headers()
     headers['Content-Type'] = 'application/json'
@@ -90,6 +92,26 @@ def create_cart(reference, product_id, quantity):
     # pprint(review_result)
 
 
+@validate_access_token
+def create_customer(customer_name, customer_email):
+    headers = get_headers()
+
+    data = {
+        'data': {
+            'type': 'customer',
+            'name': customer_name,
+            'email': customer_email
+        }
+    }
+
+    response = requests.post('https://api.moltin.com/v2/customers', headers=headers, json=data)
+    # print(response.text)
+    response.raise_for_status()
+    review_result = response.json()
+    pprint(review_result)
+
+
+@validate_access_token
 def remove_item_from_cart(reference, product_id):
     headers = get_headers()
 
@@ -100,6 +122,7 @@ def remove_item_from_cart(reference, product_id):
     # pprint(review_result)
 
 
+@validate_access_token
 def get_cart(reference):
     headers = get_headers()
 
@@ -111,6 +134,7 @@ def get_cart(reference):
     return review_result
 
 
+@validate_access_token
 def get_cart_items(reference):
     headers = get_headers()
 

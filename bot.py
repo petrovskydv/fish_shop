@@ -92,6 +92,14 @@ def payment(bot, update):
     return 'WAITING_EMAIL'
 
 
+def waiting_email(bot, update):
+    message = update.message
+    message.reply_text(text=f'Вы прислали эту почту: {message.text}')
+    online_shop.create_customer(message.from_user.first_name, message.text)
+
+    return 'WAITING_EMAIL'
+
+
 def handle_cart(bot, update):
     query = update.callback_query
     print(f'читаем корзину {query.message.chat.id}')
