@@ -197,8 +197,13 @@ def get_database_connection():
     return _database
 
 
+def handle_error(bot, update, error):
+    logger.warning('Update "%s" caused error "%s"', update, error)
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
     load_dotenv()
     token = os.environ['TELEGRAM_TOKEN']
     client_id = os.environ['STORE_CLIENT_ID']
@@ -210,4 +215,5 @@ if __name__ == '__main__':
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
+    updater.dispatcher.add_error_handler(handle_error)
     updater.start_polling()
