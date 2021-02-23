@@ -12,25 +12,6 @@ _database = None
 logger = logging.getLogger(__name__)
 
 
-def start(bot, update):
-    """
-    Хэндлер для состояния START.
-    Выводит кнопки с товарами
-    """
-    products = online_shop.get_all_products()
-    keyboard = get_products_keyboard(products)
-    keyboard.append([get_cart_button()])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    if update.message:
-        update.message.reply_text(text='Привет!', reply_markup=reply_markup)
-    elif update.callback_query:
-        message = update.callback_query.message
-        bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
-        message.reply_text(text='Привет!', reply_markup=reply_markup)
-
-    return 'HANDLE_MENU'
-
-
 def get_products_keyboard(products):
     keyboard = []
     for product in products:
@@ -64,6 +45,25 @@ def get_menu_button():
 
 def get_product_price_with_tax(product):
     return product['meta']['display_price']['with_tax']
+
+
+def start(bot, update):
+    """
+    Хэндлер для состояния START.
+    Выводит кнопки с товарами
+    """
+    products = online_shop.get_all_products()
+    keyboard = get_products_keyboard(products)
+    keyboard.append([get_cart_button()])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    if update.message:
+        update.message.reply_text(text='Привет!', reply_markup=reply_markup)
+    elif update.callback_query:
+        message = update.callback_query.message
+        bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
+        message.reply_text(text='Привет!', reply_markup=reply_markup)
+
+    return 'HANDLE_MENU'
 
 
 def handle_menu(bot, update):
@@ -129,9 +129,15 @@ def waiting_email(bot, update):
 
 
 def handle_cart(bot, update):
+    """
+    Хэндлер для состояния HANDLE_CART.
+    Выводит состав корзины и сумму
+    """
     query = update.callback_query
     print(f'читаем корзину {query.message.chat.id}')
     products = online_shop.get_cart_items(query.message.chat.id)
+
+    # формируем текст и добавляем кнопки для корзины
     cart_text = ''
     keyboard = []
     for product in products:
@@ -143,6 +149,7 @@ def handle_cart(bot, update):
                 f'{product["quantity"]}кг на сумму {product_price["value"]["formatted"]}'
             ])
         cart_text = '\n\n'.join([cart_text, text])
+
         keyboard.append([InlineKeyboardButton(f'Убрать из корзины {product["description"]}',
                                               callback_data=product['id'])])
 
