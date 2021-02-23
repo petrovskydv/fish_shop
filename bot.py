@@ -16,12 +16,13 @@ def start(bot, update):
     """
     Хэндлер для состояния START.
     """
-
     reply_markup = get_keyboard_with_products()
     if update.message:
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
-        update.callback_query.message.reply_text(text='Привет!', reply_markup=reply_markup)
+        message = update.callback_query.message
+        bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
+        message.reply_text(text='Привет!', reply_markup=reply_markup)
 
     return 'HANDLE_MENU'
 
