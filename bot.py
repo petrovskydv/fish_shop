@@ -138,6 +138,7 @@ def handle_cart(bot, update):
     total = cart['data']['meta']['display_price']['with_tax']['formatted']
     cart_text = '\n\n'.join([cart_text, f'Всего: {total}'])
 
+    bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
     update.callback_query.message.reply_text(text=cart_text, reply_markup=reply_markup)
 
     return 'HANDLE_CART_EDIT'
