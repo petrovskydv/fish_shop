@@ -49,7 +49,7 @@ def get_menu_button():
     return InlineKeyboardButton('В меню', callback_data='back')
 
 
-def ger_product_price_with_tax(product):
+def get_product_price_with_tax(product):
     return product['meta']['display_price']['with_tax']
 
 
@@ -70,7 +70,7 @@ def handle_menu(bot, update):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    text = '\n'.join([product['description'], ger_product_price_with_tax(product)['formatted']])
+    text = '\n'.join([product['description'], get_product_price_with_tax(product)['formatted']])
     try:
         image_id = product['relationships']['main_image']['data']['id']
         image_url = online_shop.get_file_href(image_id)
@@ -123,7 +123,7 @@ def handle_cart(bot, update):
     cart_text = ''
     keyboard = []
     for product in products:
-        product_price = ger_product_price_with_tax(product)
+        product_price = get_product_price_with_tax(product)
         text = '\n'.join(
             [
                 product['description'],
