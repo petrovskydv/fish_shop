@@ -31,11 +31,22 @@ def get_keyboard_with_products():
     products = online_shop.get_all_products()
     keyboard = []
     for product in products:
-        good = InlineKeyboardButton(product['description'], callback_data=product['id'])
-        keyboard.append([good])
-    keyboard.append([InlineKeyboardButton('Корзина', callback_data='cart')])
+        keyboard.append(
+            [
+                InlineKeyboardButton(product['description'], callback_data=product['id'])
+            ]
+        )
+    keyboard.append([get_cart_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
     return reply_markup
+
+
+def get_cart_button():
+    return InlineKeyboardButton('Корзина', callback_data='cart')
+
+
+def get_menu_button():
+    return InlineKeyboardButton('В меню', callback_data='back')
 
 
 def handle_menu(bot, update):
@@ -49,8 +60,8 @@ def handle_menu(bot, update):
             InlineKeyboardButton('10 кг', callback_data=f'{product["id"]},{10}')
         ],
         [
-            InlineKeyboardButton('Корзина', callback_data='cart'),
-            InlineKeyboardButton('Назад', callback_data='back')
+            get_cart_button(),
+            get_menu_button()
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -119,7 +130,7 @@ def handle_cart(bot, update):
         keyboard.append([InlineKeyboardButton(f'Убрать из корзины {product["description"]}',
                                               callback_data=product['id'])])
 
-    keyboard.append([InlineKeyboardButton('В меню', callback_data='back')])
+    keyboard.append([get_menu_button()])
     keyboard.append([InlineKeyboardButton('Оплата', callback_data='payment')])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
