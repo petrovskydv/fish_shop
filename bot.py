@@ -57,9 +57,9 @@ def handle_menu(bot, update):
     text = '\n'.join([product['description'], product['meta']['display_price']['with_tax']['formatted']])
     try:
         image_id = product['relationships']['main_image']['data']['id']
-        image = online_shop.get_file_href(image_id)
+        image_url = online_shop.get_file_href(image_id)
         bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
-        bot.send_photo(chat_id=query.message.chat_id, photo=image['link']['href'], caption=text,
+        bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=text,
                        reply_markup=reply_markup)
     except KeyError:
         bot.edit_message_text(text=text, chat_id=query.message.chat_id, message_id=query.message.message_id,

@@ -95,7 +95,7 @@ def get_file_href(product_id):
     check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
-    return review_result['data']
+    return review_result['data']['link']['href']
 
 
 @validate_access_token
