@@ -24,11 +24,14 @@ def get_products_keyboard(products):
 
 
 def get_purchase_options_keyboard(product):
+    # Задаем количество покупаемого товара
     purchase_options = (1, 5, 10)
+
     keyboard = []
     purchase_option_button = []
     for purchase_option in purchase_options:
         purchase_option_button.append(
+            # id товара и количество - в строке через запятую
             InlineKeyboardButton(f'{purchase_option} кг', callback_data=f'{product["id"]},{purchase_option}')
         )
     keyboard.append(purchase_option_button)
@@ -57,8 +60,10 @@ def start(bot, update):
     keyboard.append([get_cart_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.message:
+        # Ответ на /start
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
+        # Ответ на нажатие кнопки
         message = update.callback_query.message
         bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text='Привет!', reply_markup=reply_markup)
@@ -86,6 +91,7 @@ def handle_menu(bot, update):
         bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=text,
                        reply_markup=reply_markup)
     except KeyError:
+        # Если нет основной картинки у товара
         bot.edit_message_text(text=text, chat_id=query.message.chat_id, message_id=query.message.message_id,
                               reply_markup=reply_markup)
 
@@ -98,6 +104,7 @@ def handle_description(bot, update):
     Добавляет товар в корзину
     """
     query = update.callback_query
+    # id товара и количество - в строке через запятую
     product_id, quantity = query.data.split(',')
     print(f'добавляем корзину {query.message.chat.id}')
     online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
