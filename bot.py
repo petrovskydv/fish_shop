@@ -27,7 +27,7 @@ def start(bot, update):
 
 
 def get_keyboard_with_products():
-    products = online_shop.get_products()
+    products = online_shop.get_all_products()
     keyboard = []
     for product in products:
         good = InlineKeyboardButton(product['description'], callback_data=product['id'])
@@ -57,7 +57,7 @@ def handle_menu(bot, update):
     text = '\n'.join([product['description'], product['meta']['display_price']['with_tax']['formatted']])
     try:
         image_id = product['relationships']['main_image']['data']['id']
-        image = online_shop.get_href_file_by_id(image_id)
+        image = online_shop.get_file_href(image_id)
         bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
         bot.send_photo(chat_id=query.message.chat_id, photo=image['link']['href'], caption=text,
                        reply_markup=reply_markup)
@@ -72,7 +72,7 @@ def handle_description(bot, update):
     query = update.callback_query
     product_id, quantity = query.data.split(',')
     print(f'добавляем корзину {query.message.chat.id}')
-    online_shop.create_cart(query.message.chat.id, product_id, int(quantity))
+    online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
 
     return 'HANDLE_DESCRIPTION'
 
@@ -80,7 +80,7 @@ def handle_description(bot, update):
 def handle_cart_edit(bot, update):
     query = update.callback_query
     print(f'Удаляем из корзины {query.message.chat.id}')
-    online_shop.remove_item_from_cart(query.message.chat.id, query.data)
+    online_shop.remove_product_from_cart(query.message.chat.id, query.data)
     # TODO добавить обновление содержимого корзины
 
     return 'HANDLE_DESCRIPTION'
