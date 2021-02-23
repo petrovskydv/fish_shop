@@ -67,7 +67,7 @@ def start(bot, update):
         message = update.callback_query.message
         bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text='Привет!', reply_markup=reply_markup)
-
+    logger.info('Выведен список товаров')
     return 'HANDLE_MENU'
 
 
@@ -76,7 +76,9 @@ def handle_menu(bot, update):
     Хэндлер для состояния HANDLE_MENU.
     Выводит карточку товара из нажатой в меню кнопки
     """
+
     query = update.callback_query
+    logger.info(f'Выбран товар с id {query.data}')
     product = online_shop.get_product(query.data)
 
     keyboard = get_purchase_options_keyboard(product)
@@ -94,7 +96,7 @@ def handle_menu(bot, update):
         # Если нет основной картинки у товара
         bot.edit_message_text(text=text, chat_id=query.message.chat_id, message_id=query.message.message_id,
                               reply_markup=reply_markup)
-
+    logger.info(f'Выведен товар с id {query.data}')
     return 'HANDLE_DESCRIPTION'
 
 
@@ -106,7 +108,7 @@ def handle_description(bot, update):
     query = update.callback_query
     # id товара и количество - в строке через запятую
     product_id, quantity = query.data.split(',')
-    print(f'добавляем корзину {query.message.chat.id}')
+    logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
     online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
 
     return 'HANDLE_DESCRIPTION'
@@ -118,7 +120,7 @@ def handle_cart(bot, update):
     Выводит состав корзины и сумму
     """
     query = update.callback_query
-    print(f'читаем корзину {query.message.chat.id}')
+    logger.info(f'Выводим корзину {query.message.chat.id}')
     products = online_shop.get_cart_items(query.message.chat.id)
 
     # формируем текст и добавляем кнопки для корзины
@@ -157,7 +159,7 @@ def handle_cart_edit(bot, update):
     Добавляет товар в корзину
     """
     query = update.callback_query
-    print(f'Удаляем из корзины {query.message.chat.id}')
+    logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
     online_shop.remove_product_from_cart(query.message.chat.id, query.data)
     handle_cart(bot, update)
 
@@ -169,6 +171,7 @@ def waiting_email(bot, update):
     Хэндлер для состояния WAITING_EMAIL.
     Запрашивает email
     """
+    logger.info('Запрашиваем email')
     update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
 
     return 'CREATE_CUSTOMER'
@@ -181,6 +184,7 @@ def create_customer(bot, update):
     """
     message = update.message
     message.reply_text(text=f'Вы прислали эту почту: {message.text}')
+    logger.info(f'Записываем покупателя с email {message.text}')
     online_shop.create_customer(message.from_user.first_name, message.text)
 
 
@@ -213,7 +217,7 @@ def handle_users_reply(bot, update):
     elif user_reply == 'cart':
         user_state = 'HANDLE_CART'
     elif user_reply == 'payment':
-        user_state = 'PAYMENT'
+        user_state = 'WAITING_EMAIL'
     else:
         user_state = db.get(chat_id).decode('utf-8')
 

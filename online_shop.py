@@ -63,6 +63,7 @@ def get_headers():
 @validate_access_token
 def get_all_products():
     headers = get_headers()
+    logger.info('Получаем список товаров')
     response = requests.get('https://api.moltin.com/v2/products', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -81,6 +82,7 @@ def get_all_products():
 @validate_access_token
 def get_product(product_id):
     headers = get_headers()
+    logger.info(f'Получаем товар с id {product_id}')
     response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -91,6 +93,7 @@ def get_product(product_id):
 @validate_access_token
 def get_file_href(product_id):
     headers = get_headers()
+    logger.info(f'Получаем ссылку основного изображения товара с id {product_id}')
     response = requests.get(f'https://api.moltin.com/v2/files/{product_id}', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -109,7 +112,7 @@ def add_product_to_cart(reference, product_id, quantity):
             'type': 'cart_item',
             'quantity': quantity}
     }
-
+    logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} в корзину {reference}')
     response = requests.post(f'https://api.moltin.com/v2/carts/{reference}/items/', headers=headers, json=data)
     check_for_error(response)
     response.raise_for_status()
@@ -118,7 +121,7 @@ def add_product_to_cart(reference, product_id, quantity):
 @validate_access_token
 def remove_product_from_cart(reference, product_id):
     headers = get_headers()
-
+    logger.info(f'Удаляем товар с id {product_id} из корзины {reference}')
     response = requests.delete(f'https://api.moltin.com/v2/carts/{reference}/items/{product_id}', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -127,7 +130,7 @@ def remove_product_from_cart(reference, product_id):
 @validate_access_token
 def get_cart(reference):
     headers = get_headers()
-
+    logger.info(f'Получаем данные корзины {reference}')
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -137,6 +140,7 @@ def get_cart(reference):
 @validate_access_token
 def get_cart_items(reference):
     headers = get_headers()
+    logger.info(f'Получаем товары корзины {reference}')
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=headers)
     check_for_error(response)
     response.raise_for_status()
@@ -155,7 +159,7 @@ def create_customer(customer_name, customer_email):
             'email': customer_email
         }
     }
-
+    logger.info(f'Создаем покупателя {customer_name}, email: {customer_email}')
     response = requests.post('https://api.moltin.com/v2/customers', headers=headers, json=data)
     check_for_error(response)
     response.raise_for_status()
@@ -163,7 +167,7 @@ def create_customer(customer_name, customer_email):
 
 def get_access_token(client_id=None):
     set_client_id(client_id)
-
+    logger.info('Получаем токен')
     payload = {
         'client_id': _client_id,
         'grant_type': 'implicit'
