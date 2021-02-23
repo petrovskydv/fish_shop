@@ -26,7 +26,6 @@ def validate_access_token(fnc):
 @validate_access_token
 def get_products():
     headers = get_headers()
-
     response = requests.get('https://api.moltin.com/v2/products', headers=headers)
     response.raise_for_status()
     review_result = response.json()
@@ -53,10 +52,10 @@ def get_product(product_id):
     headers = get_headers()
 
     response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=headers)
-    print(response.text)
+    # print(response.text)
     response.raise_for_status()
     review_result = response.json()
-    pprint(review_result)
+    # pprint(review_result)
 
     return review_result['data']
 
@@ -66,10 +65,10 @@ def get_href_file_by_id(product_id):
     headers = get_headers()
 
     response = requests.get(f'https://api.moltin.com/v2/files/{product_id}', headers=headers)
-    print(response.text)
+    # print(response.text)
     response.raise_for_status()
     review_result = response.json()
-    pprint(review_result)
+    # pprint(review_result)
     return review_result['data']
 
 
@@ -85,20 +84,30 @@ def create_cart(reference, product_id, quantity):
     }
 
     response = requests.post(f'https://api.moltin.com/v2/carts/{reference}/items/', headers=headers, json=data)
-    print(response.text)
+    # print(response.text)
     response.raise_for_status()
     review_result = response.json()
-    pprint(review_result)
+    # pprint(review_result)
+
+
+def remove_item_from_cart(reference, product_id):
+    headers = get_headers()
+
+    response = requests.delete(f'https://api.moltin.com/v2/carts/{reference}/items/{product_id}', headers=headers)
+    # print(response.text)
+    response.raise_for_status()
+    review_result = response.json()
+    # pprint(review_result)
 
 
 def get_cart(reference):
     headers = get_headers()
 
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=headers)
-    print(response.text)
+    # print(response.text)
     response.raise_for_status()
     review_result = response.json()
-    pprint(review_result)
+    # pprint(review_result)
     return review_result
 
 
@@ -106,10 +115,10 @@ def get_cart_items(reference):
     headers = get_headers()
 
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=headers)
-    print(response.text)
+    # print(response.text)
     response.raise_for_status()
     review_result = response.json()
-    pprint(review_result)
+    # pprint(review_result)
     return review_result['data']
 
 
