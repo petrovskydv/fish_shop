@@ -105,29 +105,6 @@ def handle_description(bot, update):
     return 'HANDLE_DESCRIPTION'
 
 
-def handle_cart_edit(bot, update):
-    query = update.callback_query
-    print(f'Удаляем из корзины {query.message.chat.id}')
-    online_shop.remove_product_from_cart(query.message.chat.id, query.data)
-    # TODO добавить обновление содержимого корзины
-
-    return 'HANDLE_DESCRIPTION'
-
-
-def payment(bot, update):
-    update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
-
-    return 'WAITING_EMAIL'
-
-
-def waiting_email(bot, update):
-    message = update.message
-    message.reply_text(text=f'Вы прислали эту почту: {message.text}')
-    online_shop.create_customer(message.from_user.first_name, message.text)
-
-    return 'WAITING_EMAIL'
-
-
 def handle_cart(bot, update):
     """
     Хэндлер для состояния HANDLE_CART.
@@ -165,6 +142,33 @@ def handle_cart(bot, update):
     update.callback_query.message.reply_text(text=cart_text, reply_markup=reply_markup)
 
     return 'HANDLE_CART_EDIT'
+
+
+def handle_cart_edit(bot, update):
+    """
+    Хэндлер для состояния HANDLE_DESCRIPTION.
+    Добавляет товар в корзину
+    """
+    query = update.callback_query
+    print(f'Удаляем из корзины {query.message.chat.id}')
+    online_shop.remove_product_from_cart(query.message.chat.id, query.data)
+    handle_cart(bot, update)
+
+    return 'HANDLE_CART_EDIT'
+
+
+def payment(bot, update):
+    update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
+
+    return 'WAITING_EMAIL'
+
+
+def waiting_email(bot, update):
+    message = update.message
+    message.reply_text(text=f'Вы прислали эту почту: {message.text}')
+    online_shop.create_customer(message.from_user.first_name, message.text)
+
+    return 'WAITING_EMAIL'
 
 
 def handle_users_reply(bot, update):
