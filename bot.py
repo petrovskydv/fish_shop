@@ -220,14 +220,8 @@ def handle_users_reply(bot, update):
         'CREATE_CUSTOMER': create_customer
     }
     state_handler = states_functions[user_state]
-    # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
-    # Оставляю этот try...except, чтобы код не падал молча.
-    # Этот фрагмент можно переписать.
-    # try:
     next_state = state_handler(bot, update)
     db.set(chat_id, next_state)
-    # except Exception as err:
-    #     print(err)
 
 
 def get_database_connection():
@@ -251,12 +245,10 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
     load_dotenv()
-    token = os.environ['TELEGRAM_TOKEN']
-    client_id = os.environ['STORE_CLIENT_ID']
 
-    online_shop.get_access_token(client_id)
+    online_shop.get_access_token(os.environ['STORE_CLIENT_ID'])
 
-    updater = Updater(token)
+    updater = Updater(os.environ['TELEGRAM_TOKEN'])
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
