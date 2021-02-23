@@ -187,6 +187,8 @@ def create_customer(bot, update):
     logger.info(f'Записываем покупателя с email {message.text}')
     online_shop.create_customer(message.from_user.first_name, message.text)
 
+    return 'END'
+
 
 def handle_users_reply(bot, update):
     """
