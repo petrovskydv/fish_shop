@@ -157,18 +157,24 @@ def handle_cart_edit(bot, update):
     return 'HANDLE_CART_EDIT'
 
 
-def payment(bot, update):
+def waiting_email(bot, update):
+    """
+    Хэндлер для состояния WAITING_EMAIL.
+    Запрашивает email
+    """
     update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
 
-    return 'WAITING_EMAIL'
+    return 'CREATE_CUSTOMER'
 
 
-def waiting_email(bot, update):
+def create_customer(bot, update):
+    """
+    Хэндлер для состояния CREATE_CUSTOMER.
+    Записывает покупателя в базу CRM
+    """
     message = update.message
     message.reply_text(text=f'Вы прислали эту почту: {message.text}')
     online_shop.create_customer(message.from_user.first_name, message.text)
-
-    return 'WAITING_EMAIL'
 
 
 def handle_users_reply(bot, update):
@@ -210,8 +216,8 @@ def handle_users_reply(bot, update):
         'HANDLE_DESCRIPTION': handle_description,
         'HANDLE_CART': handle_cart,
         'HANDLE_CART_EDIT': handle_cart_edit,
-        'PAYMENT': payment,
-        'WAITING_EMAIL': waiting_email
+        'WAITING_EMAIL': waiting_email,
+        'CREATE_CUSTOMER': create_customer
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
