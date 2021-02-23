@@ -15,8 +15,12 @@ logger = logging.getLogger(__name__)
 def start(bot, update):
     """
     Хэндлер для состояния START.
+    Выводит кнопки с товарами
     """
-    reply_markup = get_keyboard_with_products()
+    products = online_shop.get_all_products()
+    keyboard = get_products_keyboard(products)
+    keyboard.append([get_cart_button()])
+    reply_markup = InlineKeyboardMarkup(keyboard)
     if update.message:
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
@@ -27,8 +31,7 @@ def start(bot, update):
     return 'HANDLE_MENU'
 
 
-def get_keyboard_with_products():
-    products = online_shop.get_all_products()
+def get_products_keyboard(products):
     keyboard = []
     for product in products:
         keyboard.append(
@@ -36,9 +39,19 @@ def get_keyboard_with_products():
                 InlineKeyboardButton(product['description'], callback_data=product['id'])
             ]
         )
-    keyboard.append([get_cart_button()])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    return reply_markup
+    return keyboard
+
+
+def get_purchase_options_keyboard(product):
+    purchase_options = (1, 5, 10)
+    keyboard = []
+    purchase_option_button = []
+    for purchase_option in purchase_options:
+        purchase_option_button.append(
+            InlineKeyboardButton(f'{purchase_option} кг', callback_data=f'{product["id"]},{purchase_option}')
+        )
+    keyboard.append(purchase_option_button)
+    return keyboard
 
 
 def get_cart_button():
@@ -54,20 +67,15 @@ def get_product_price_with_tax(product):
 
 
 def handle_menu(bot, update):
+    """
+    Хэндлер для состояния HANDLE_MENU.
+    Выводит карточку товара из нажатой в меню кнопки
+    """
     query = update.callback_query
     product = online_shop.get_product(query.data)
 
-    keyboard = [
-        [
-            InlineKeyboardButton('1 кг', callback_data=f'{product["id"]},{1}'),
-            InlineKeyboardButton('5 кг', callback_data=f'{product["id"]},{5}'),
-            InlineKeyboardButton('10 кг', callback_data=f'{product["id"]},{10}')
-        ],
-        [
-            get_cart_button(),
-            get_menu_button()
-        ]
-    ]
+    keyboard = get_purchase_options_keyboard(product)
+    keyboard.append([get_cart_button(), get_menu_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     text = '\n'.join([product['description'], get_product_price_with_tax(product)['formatted']])
@@ -85,6 +93,10 @@ def handle_menu(bot, update):
 
 
 def handle_description(bot, update):
+    """
+    Хэндлер для состояния HANDLE_DESCRIPTION.
+    Добавляет товар в корзину
+    """
     query = update.callback_query
     product_id, quantity = query.data.split(',')
     print(f'добавляем корзину {query.message.chat.id}')
