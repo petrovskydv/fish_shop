@@ -110,7 +110,7 @@ def handle_description(bot, update):
     product_id, quantity = query.data.split(',')
     logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
     online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
-
+    query.answer('Товар добавлен в корзину')
     return 'HANDLE_DESCRIPTION'
 
 
@@ -155,8 +155,8 @@ def handle_cart(bot, update):
 
 def handle_cart_edit(bot, update):
     """
-    Хэндлер для состояния HANDLE_DESCRIPTION.
-    Добавляет товар в корзину
+    Хэндлер для состояния HANDLE_CART_EDIT.
+    Удаляет товар из корзину
     """
     query = update.callback_query
     logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
