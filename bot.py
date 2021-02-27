@@ -1,22 +1,19 @@
-import os
 import logging
-import redis
-from dotenv import load_dotenv
+import os
 from textwrap import dedent
 
+import redis
+from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
+from telegram.ext import Filters, Updater
+
 import online_shop
 from keyboards import get_products_keyboard, get_purchase_options_keyboard, get_cart_button, get_menu_button, \
     get_text_and_buttons_for_cart
 
 _database = None
 logger = logging.getLogger(__name__)
-
-
-def get_product_price_with_tax(product):
-    return product['meta']['display_price']['with_tax']
 
 
 def start(bot, update):
@@ -51,10 +48,11 @@ def handle_menu(bot, update):
     keyboard = get_purchase_options_keyboard(product)
     keyboard.append([get_cart_button(), get_menu_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
+    product_price = product['meta']['display_price']['with_tax']
 
     text = f"""\
     {product['description']}
-    {get_product_price_with_tax(product)['formatted']}
+    {product_price['formatted']}
     """
 
     try:
