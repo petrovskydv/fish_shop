@@ -52,13 +52,6 @@ def validate_access_token(fnc):
     return wrapped
 
 
-def get_headers():
-    headers = {
-        'Authorization': f'Bearer {_token}',
-    }
-    return headers
-
-
 @validate_access_token
 def get_all_products():
     logger.info('Получаем список товаров')
