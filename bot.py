@@ -17,9 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 def start(bot, update):
-    """
-    Хэндлер для состояния START.
-    Выводит кнопки с товарами
+    """Хэндлер для состояния START.
+
+    Выводит кнопки с товарами.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние HANDLE_MENU
     """
     products = online_shop.get_all_products()
     keyboard = get_products_keyboard(products)
@@ -36,11 +43,17 @@ def start(bot, update):
 
 
 def handle_menu(bot, update):
-    """
-    Хэндлер для состояния HANDLE_MENU.
-    Выводит карточку товара из нажатой в меню кнопки
-    """
+    """Хэндлер для состояния HANDLE_MENU.
 
+    Выводит карточку товара из нажатой в меню кнопки.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние HANDLE_DESCRIPTION
+    """
     query = update.callback_query
     logger.info(f'Выбран товар с id {query.data}')
     product = online_shop.get_product(query.data)
@@ -69,9 +82,16 @@ def handle_menu(bot, update):
 
 
 def handle_description(bot, update):
-    """
-    Хэндлер для состояния HANDLE_DESCRIPTION.
-    Добавляет товар в корзину
+    """Хэндлер для состояния HANDLE_DESCRIPTION.
+
+    Добавляет товар в корзину.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние HANDLE_DESCRIPTION
     """
     query = update.callback_query
     product_id, quantity = query.data.split(',')
@@ -82,9 +102,16 @@ def handle_description(bot, update):
 
 
 def handle_cart(bot, update):
-    """
-    Хэндлер для состояния HANDLE_CART.
-    Выводит состав корзины и сумму
+    """Хэндлер для состояния HANDLE_CART.
+
+    Выводит состав корзины и сумму.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние HANDLE_CART_EDIT
     """
     query = update.callback_query
     logger.info(f'Выводим корзину {query.message.chat.id}')
@@ -111,9 +138,16 @@ def handle_cart(bot, update):
 
 
 def handle_cart_edit(bot, update):
-    """
-    Хэндлер для состояния HANDLE_CART_EDIT.
-    Удаляет товар из корзину
+    """Хэндлер для состояния HANDLE_CART_EDIT.
+
+    Удаляет товар из корзины.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние HANDLE_CART_EDIT
     """
     query = update.callback_query
     logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
@@ -124,9 +158,16 @@ def handle_cart_edit(bot, update):
 
 
 def waiting_email(bot, update):
-    """
-    Хэндлер для состояния WAITING_EMAIL.
-    Запрашивает email
+    """Хэндлер для состояния WAITING_EMAIL.
+
+    Запрашивает email.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние CREATE_CUSTOMER
     """
     logger.info('Запрашиваем email')
     update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
@@ -135,9 +176,16 @@ def waiting_email(bot, update):
 
 
 def create_customer(bot, update):
-    """
-    Хэндлер для состояния CREATE_CUSTOMER.
-    Записывает покупателя в базу CRM
+    """Хэндлер для состояния CREATE_CUSTOMER.
+
+    Записывает покупателя в базу CRM.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        str: состояние END
     """
     message = update.message
     message.reply_text(text=f'Вы прислали эту почту: {message.text}')
@@ -148,7 +196,8 @@ def create_customer(bot, update):
 
 
 def handle_users_reply(bot, update):
-    """
+    """Хэндлер для обработки всех сообщений.
+
     Функция, которая запускается при любом сообщении от пользователя и решает как его обработать.
     Эта функция запускается в ответ на эти действия пользователя:
         * Нажатие на inline-кнопку в боте
@@ -159,6 +208,13 @@ def handle_users_reply(bot, update):
     Если пользователь только начал пользоваться ботом, Telegram форсит его написать "/start",
     поэтому по этой фразе выставляется стартовое состояние.
     Если пользователь захочет начать общение с ботом заново, он также может воспользоваться этой командой.
+
+    Args:
+        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
+        update (:class:`telegram.Update`): Incoming telegram update.
+
+    Returns:
+        None
     """
     db = get_database_connection()
     if update.message:
@@ -195,8 +251,12 @@ def handle_users_reply(bot, update):
 
 
 def get_database_connection():
-    """
+    """Соединение с базой банных.
+
     Возвращает конекшн с базой данных Redis, либо создаёт новый, если он ещё не создан.
+
+    Returns:
+        (:class:`redis.Redis`): Redis client object
     """
     global _database
     if _database is None:
