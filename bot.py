@@ -2,6 +2,7 @@ import os
 import logging
 import redis
 from dotenv import load_dotenv
+from textwrap import dedent
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
@@ -52,16 +53,20 @@ def handle_menu(bot, update):
     keyboard.append([get_cart_button(), get_menu_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    text = '\n'.join([product['description'], get_product_price_with_tax(product)['formatted']])
+    text = f"""\
+    {product['description']}
+    {get_product_price_with_tax(product)['formatted']}
+    """
+
     try:
         image_id = product['relationships']['main_image']['data']['id']
         image_url = online_shop.get_file_href(image_id)
         bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
-        bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=text,
+        bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
                        reply_markup=reply_markup)
     except KeyError:
         # Если нет основной картинки у товара
-        bot.edit_message_text(text=text, chat_id=query.message.chat_id, message_id=query.message.message_id,
+        bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id, message_id=query.message.message_id,
                               reply_markup=reply_markup)
     logger.info(f'Выведен товар с id {query.data}')
     return 'HANDLE_DESCRIPTION'
@@ -91,17 +96,18 @@ def handle_cart(bot, update):
     products = online_shop.get_cart_items(query.message.chat.id)
 
     # формируем текст и добавляем кнопки для корзины
-    cart_text = ''
+
+    text = ' '
     keyboard = []
     for product in products:
         product_price = get_product_price_with_tax(product)
-        text = '\n'.join(
-            [
-                product['description'],
-                product_price['unit']['formatted'],
-                f'{product["quantity"]}кг на сумму {product_price["value"]["formatted"]}'
-            ])
-        cart_text = '\n\n'.join([cart_text, text])
+
+        text = f"""\
+        {text}
+        {product['description']}
+        {product_price['unit']['formatted']}
+        {product["quantity"]}кг на сумму {product_price["value"]["formatted"]}\
+        """
 
         keyboard.append([InlineKeyboardButton(f'Убрать из корзины {product["description"]}',
                                               callback_data=product['id'])])
@@ -112,10 +118,14 @@ def handle_cart(bot, update):
 
     cart = online_shop.get_cart(query.message.chat.id)
     total = cart['data']['meta']['display_price']['with_tax']['formatted']
-    cart_text = '\n\n'.join([cart_text, f'Всего: {total}'])
+    cart_text = f'''\
+    {text}
+    
+        Всего: {total}
+    '''
 
     bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
-    update.callback_query.message.reply_text(text=cart_text, reply_markup=reply_markup)
+    update.callback_query.message.reply_text(text=dedent(cart_text), reply_markup=reply_markup)
 
     return 'HANDLE_CART_EDIT'
 
