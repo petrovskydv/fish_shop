@@ -22,10 +22,8 @@ class InvalidAccessToken(Exception):
 
 def check_for_error(response):
     if response.status_code == 409:
-        # email уже существует
         raise DuplicateEmail(response.text)
     if response.status_code == 401:
-        # время действия токена истекло
         raise InvalidAccessToken(response.text)
 
 

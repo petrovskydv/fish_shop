@@ -8,7 +8,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 import online_shop
-from keyboards import get_products_keyboard, get_purchase_options_keyboard, get_cart_button, get_menu_button
+from keyboards import get_products_keyboard, get_purchase_options_keyboard, get_cart_button, get_menu_button, \
+    get_text_and_buttons_for_cart
 
 _database = None
 logger = logging.getLogger(__name__)
@@ -28,10 +29,8 @@ def start(bot, update):
     keyboard.append([get_cart_button()])
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.message:
-        # Ответ на /start
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
-        # Ответ на нажатие кнопки
         message = update.callback_query.message
         bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text='Привет!', reply_markup=reply_markup)
@@ -65,7 +64,6 @@ def handle_menu(bot, update):
         bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
                        reply_markup=reply_markup)
     except KeyError:
-        # Если нет основной картинки у товара
         bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id, message_id=query.message.message_id,
                               reply_markup=reply_markup)
     logger.info(f'Выведен товар с id {query.data}')
@@ -78,7 +76,6 @@ def handle_description(bot, update):
     Добавляет товар в корзину
     """
     query = update.callback_query
-    # id товара и количество - в строке через запятую
     product_id, quantity = query.data.split(',')
     logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
     online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
@@ -95,22 +92,7 @@ def handle_cart(bot, update):
     logger.info(f'Выводим корзину {query.message.chat.id}')
     products = online_shop.get_cart_items(query.message.chat.id)
 
-    # формируем текст и добавляем кнопки для корзины
-
-    text = ' '
-    keyboard = []
-    for product in products:
-        product_price = get_product_price_with_tax(product)
-
-        text = f"""\
-        {text}
-        {product['description']}
-        {product_price['unit']['formatted']}
-        {product["quantity"]}кг на сумму {product_price["value"]["formatted"]}\
-        """
-
-        keyboard.append([InlineKeyboardButton(f'Убрать из корзины {product["description"]}',
-                                              callback_data=product['id'])])
+    keyboard, text = get_text_and_buttons_for_cart(products)
 
     keyboard.append([get_menu_button()])
     keyboard.append([InlineKeyboardButton('Оплата', callback_data='payment')])

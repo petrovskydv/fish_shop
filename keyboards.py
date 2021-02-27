@@ -13,14 +13,12 @@ def get_products_keyboard(products):
 
 
 def get_purchase_options_keyboard(product):
-    # Задаем количество покупаемого товара
     purchase_options = (1, 5, 10)
 
     keyboard = []
     purchase_option_button = []
     for purchase_option in purchase_options:
         purchase_option_button.append(
-            # id товара и количество - в строке через запятую
             InlineKeyboardButton(f'{purchase_option} кг', callback_data=f'{product["id"]},{purchase_option}')
         )
     keyboard.append(purchase_option_button)
@@ -33,3 +31,21 @@ def get_cart_button():
 
 def get_menu_button():
     return InlineKeyboardButton('В меню', callback_data='back')
+
+
+def get_text_and_buttons_for_cart(products):
+    cart_text = ' '
+    keyboard = []
+    for product in products:
+        product_price = product['meta']['display_price']['with_tax']
+
+        cart_text = f"""\
+        {cart_text}
+        {product['description']}
+        {product_price['unit']['formatted']}
+        {product["quantity"]}кг на сумму {product_price["value"]["formatted"]}\
+        """
+
+        keyboard.append([InlineKeyboardButton(f'Убрать из корзины {product["description"]}',
+                                              callback_data=product['id'])])
+    return keyboard, cart_text
