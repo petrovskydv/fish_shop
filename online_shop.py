@@ -8,6 +8,7 @@ import requests
 logger = logging.getLogger(__name__)
 _token = None
 _client_id = None
+_headers = None
 
 
 class DuplicateEmail(Exception):
@@ -60,9 +61,8 @@ def get_headers():
 
 @validate_access_token
 def get_all_products():
-    headers = get_headers()
     logger.info('Получаем список товаров')
-    response = requests.get('https://api.moltin.com/v2/products', headers=headers)
+    response = requests.get('https://api.moltin.com/v2/products', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
@@ -79,9 +79,8 @@ def get_all_products():
 
 @validate_access_token
 def get_product(product_id):
-    headers = get_headers()
     logger.info(f'Получаем товар с id {product_id}')
-    response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
@@ -90,9 +89,8 @@ def get_product(product_id):
 
 @validate_access_token
 def get_file_href(product_id):
-    headers = get_headers()
     logger.info(f'Получаем ссылку основного изображения товара с id {product_id}')
-    response = requests.get(f'https://api.moltin.com/v2/files/{product_id}', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/files/{product_id}', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
@@ -101,8 +99,7 @@ def get_file_href(product_id):
 
 @validate_access_token
 def add_product_to_cart(reference, product_id, quantity):
-    headers = get_headers()
-    headers['Content-Type'] = 'application/json'
+    headers = {**_headers, 'Content-Type': 'application/json'}
 
     data = {
         'data': {
@@ -118,18 +115,16 @@ def add_product_to_cart(reference, product_id, quantity):
 
 @validate_access_token
 def remove_product_from_cart(reference, product_id):
-    headers = get_headers()
     logger.info(f'Удаляем товар с id {product_id} из корзины {reference}')
-    response = requests.delete(f'https://api.moltin.com/v2/carts/{reference}/items/{product_id}', headers=headers)
+    response = requests.delete(f'https://api.moltin.com/v2/carts/{reference}/items/{product_id}', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
 
 
 @validate_access_token
 def get_cart(reference):
-    headers = get_headers()
     logger.info(f'Получаем данные корзины {reference}')
-    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
     return response.json()
@@ -137,9 +132,8 @@ def get_cart(reference):
 
 @validate_access_token
 def get_cart_items(reference):
-    headers = get_headers()
     logger.info(f'Получаем товары корзины {reference}')
-    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=headers)
+    response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=_headers)
     check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
@@ -148,8 +142,6 @@ def get_cart_items(reference):
 
 @validate_access_token
 def create_customer(customer_name, customer_email):
-    headers = get_headers()
-
     data = {
         'data': {
             'type': 'customer',
@@ -158,7 +150,7 @@ def create_customer(customer_name, customer_email):
         }
     }
     logger.info(f'Создаем покупателя {customer_name}, email: {customer_email}')
-    response = requests.post('https://api.moltin.com/v2/customers', headers=headers, json=data)
+    response = requests.post('https://api.moltin.com/v2/customers', headers=_headers, json=data)
     check_for_error(response)
     response.raise_for_status()
 
@@ -177,6 +169,8 @@ def get_access_token(client_id=None):
 
     global _token
     _token = review_result['access_token']
+    global _headers
+    _headers = {'Authorization': f'Bearer {_token}'}
 
 
 def set_client_id(client_id=None):
