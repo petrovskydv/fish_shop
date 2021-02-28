@@ -1,6 +1,5 @@
 import logging
 import sys
-import time
 from functools import wraps
 
 import requests
@@ -47,7 +46,6 @@ def validate_access_token(fnc):
         except requests.ConnectionError as e:
             logger.exception(e)
             print(e, file=sys.stderr)
-            time.sleep(10)
 
     return wrapped
 
