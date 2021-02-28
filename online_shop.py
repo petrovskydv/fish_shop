@@ -98,7 +98,8 @@ def add_product_to_cart(reference, product_id, quantity):
         'data': {
             'id': product_id,
             'type': 'cart_item',
-            'quantity': quantity}
+            'quantity': quantity
+        }
     }
     logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} в корзину {reference}')
     response = requests.post(f'https://api.moltin.com/v2/carts/{reference}/items/', headers=headers, json=data)

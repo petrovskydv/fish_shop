@@ -36,7 +36,7 @@ def start(bot, update):
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
         message = update.callback_query.message
-        bot.deleteMessage(chat_id=message.chat.id, message_id=message.message_id)
+        bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text='Привет!', reply_markup=reply_markup)
     logger.info('Выведен список товаров')
     return 'HANDLE_MENU'
@@ -71,7 +71,7 @@ def handle_menu(bot, update):
     try:
         image_id = product['relationships']['main_image']['data']['id']
         image_url = online_shop.get_file_href(image_id)
-        bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
+        bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
         bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
                        reply_markup=reply_markup)
     except KeyError:
@@ -131,7 +131,7 @@ def handle_cart(bot, update):
         Всего: {total}
     '''
 
-    bot.deleteMessage(chat_id=query.message.chat.id, message_id=query.message.message_id)
+    bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     update.callback_query.message.reply_text(text=dedent(cart_text), reply_markup=reply_markup)
 
     return 'HANDLE_CART_EDIT'
