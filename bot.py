@@ -16,14 +16,14 @@ _database = None
 logger = logging.getLogger(__name__)
 
 
-def start(bot, update):
+def start(update, context):
     """Хэндлер для состояния START.
 
     Выводит кнопки с товарами.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние HANDLE_MENU
@@ -36,20 +36,20 @@ def start(bot, update):
         update.message.reply_text(text='Привет!', reply_markup=reply_markup)
     elif update.callback_query:
         message = update.callback_query.message
-        bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+        context.bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text='Привет!', reply_markup=reply_markup)
     logger.info('Выведен список товаров')
     return 'HANDLE_MENU'
 
 
-def handle_menu(bot, update):
+def handle_menu(update, context):
     """Хэндлер для состояния HANDLE_MENU.
 
     Выводит карточку товара из нажатой в меню кнопки.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние HANDLE_DESCRIPTION
@@ -71,24 +71,25 @@ def handle_menu(bot, update):
     try:
         image_id = product['relationships']['main_image']['data']['id']
         image_url = online_shop.get_file_href(image_id)
-        bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
-        bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
-                       reply_markup=reply_markup)
+        context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+        context.bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
+                               reply_markup=reply_markup)
     except KeyError:
-        bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id, message_id=query.message.message_id,
-                              reply_markup=reply_markup)
+        context.bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id,
+                                      message_id=query.message.message_id,
+                                      reply_markup=reply_markup)
     logger.info(f'Выведен товар с id {query.data}')
     return 'HANDLE_DESCRIPTION'
 
 
-def handle_description(bot, update):
+def handle_description(update, context):
     """Хэндлер для состояния HANDLE_DESCRIPTION.
 
     Добавляет товар в корзину.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние HANDLE_DESCRIPTION
@@ -101,14 +102,14 @@ def handle_description(bot, update):
     return 'HANDLE_DESCRIPTION'
 
 
-def handle_cart(bot, update):
+def handle_cart(update, context):
     """Хэндлер для состояния HANDLE_CART.
 
     Выводит состав корзины и сумму.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние HANDLE_CART_EDIT
@@ -131,20 +132,20 @@ def handle_cart(bot, update):
         Всего: {total}
     '''
 
-    bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+    context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     update.callback_query.message.reply_text(text=dedent(cart_text), reply_markup=reply_markup)
 
     return 'HANDLE_CART_EDIT'
 
 
-def handle_cart_edit(bot, update):
+def handle_cart_edit(update, context):
     """Хэндлер для состояния HANDLE_CART_EDIT.
 
     Удаляет товар из корзины.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние HANDLE_CART_EDIT
@@ -152,19 +153,19 @@ def handle_cart_edit(bot, update):
     query = update.callback_query
     logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
     online_shop.remove_product_from_cart(query.message.chat.id, query.data)
-    handle_cart(bot, update)
+    handle_cart(update, context)
 
     return 'HANDLE_CART_EDIT'
 
 
-def waiting_email(bot, update):
+def waiting_email(update, context):
     """Хэндлер для состояния WAITING_EMAIL.
 
     Запрашивает email.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние CREATE_CUSTOMER
@@ -175,14 +176,14 @@ def waiting_email(bot, update):
     return 'CREATE_CUSTOMER'
 
 
-def create_customer(bot, update):
+def create_customer(update, context):
     """Хэндлер для состояния CREATE_CUSTOMER.
 
     Записывает покупателя в базу CRM.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         str: состояние END
@@ -195,7 +196,7 @@ def create_customer(bot, update):
     return 'END'
 
 
-def handle_users_reply(bot, update):
+def handle_users_reply(update, context):
     """Хэндлер для обработки всех сообщений.
 
     Функция, которая запускается при любом сообщении от пользователя и решает как его обработать.
@@ -210,8 +211,8 @@ def handle_users_reply(bot, update):
     Если пользователь захочет начать общение с ботом заново, он также может воспользоваться этой командой.
 
     Args:
-        bot (:class:`telegram.Bot`): The bot object that should be passed to the handlers.
         update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
         None
@@ -246,7 +247,7 @@ def handle_users_reply(bot, update):
         'CREATE_CUSTOMER': create_customer
     }
     state_handler = states_functions[user_state]
-    next_state = state_handler(bot, update)
+    next_state = state_handler(update, context)
     db.set(chat_id, next_state)
 
 
@@ -267,7 +268,7 @@ def get_database_connection():
     return _database
 
 
-def handle_error(bot, update, error):
+def handle_error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
