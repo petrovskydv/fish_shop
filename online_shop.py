@@ -5,7 +5,6 @@ from functools import wraps
 import requests
 
 logger = logging.getLogger(__name__)
-_token = None
 _client_id = None
 _headers = None
 
@@ -154,15 +153,15 @@ def get_access_token(client_id=None):
         'client_id': _client_id,
         'grant_type': 'implicit'
     }
-
     response = requests.post('https://api.moltin.com/oauth/access_token', data=payload)
     response.raise_for_status()
     review_result = response.json()
+    set_headers(review_result['access_token'])
 
-    global _token
-    _token = review_result['access_token']
+
+def set_headers(access_token):
     global _headers
-    _headers = {'Authorization': f'Bearer {_token}'}
+    _headers = {'Authorization': f'Bearer {access_token}'}
 
 
 def set_client_id(client_id=None):
