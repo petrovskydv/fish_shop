@@ -285,5 +285,5 @@ if __name__ == '__main__':
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
-    updater.dispatcher.add_error_handler(handle_error)
+    dispatcher.add_error_handler(handle_error)
     updater.start_polling()
