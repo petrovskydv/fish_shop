@@ -16,16 +16,9 @@ class DuplicateEmail(Exception):
         self.txt = text
 
 
-class InvalidAccessToken(Exception):
-    def __init__(self, text):
-        self.txt = text
-
-
 def check_for_error(response):
     if response.status_code == 409:
         raise DuplicateEmail(response.text)
-    if response.status_code == 401:
-        raise InvalidAccessToken(response.text)
 
 
 def validate_access_token(fnc):
