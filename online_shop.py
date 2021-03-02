@@ -1,7 +1,6 @@
 import logging
-import sys
-from functools import wraps
 import time
+from functools import wraps
 
 import requests
 

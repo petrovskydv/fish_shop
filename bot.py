@@ -45,65 +45,78 @@ def start(update, context):
 def handle_menu(update, context):
     """Хэндлер для состояния HANDLE_MENU.
 
-    Выводит карточку товара из нажатой в меню кнопки.
+    Выводит карточку товара из нажатой в меню кнопки, либо переходит в корзину.
 
     Args:
         update (:class:`telegram.Update`): Incoming telegram update.
         context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
-        str: состояние HANDLE_DESCRIPTION
+        str: одно из состояний: HANDLE_MENU, HANDLE_CART_EDIT, HANDLE_DESCRIPTION
     """
-    query = update.callback_query
-    logger.info(f'Выбран товар с id {query.data}')
-    product = online_shop.get_product(query.data)
+    if update.message:
+        return 'HANDLE_MENU'
+    if update.callback_query:
+        if update.callback_query.data == 'cart':
+            return handle_cart(update, context)
+        else:
+            query = update.callback_query
+            logger.info(f'Выбран товар с id {query.data}')
+            product = online_shop.get_product(query.data)
 
-    keyboard = get_purchase_options_keyboard(product)
-    keyboard.append([get_cart_button(), get_menu_button()])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    product_price = product['meta']['display_price']['with_tax']
+            keyboard = get_purchase_options_keyboard(product)
+            keyboard.append([get_cart_button(), get_menu_button()])
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
-    text = f"""\
-    {product['description']}
-    {product_price['formatted']}
-    """
-
-    try:
-        image_id = product['relationships']['main_image']['data']['id']
-        image_url = online_shop.get_file_href(image_id)
-        context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
-        context.bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
-                               reply_markup=reply_markup)
-    except KeyError:
-        context.bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id,
-                                      message_id=query.message.message_id,
-                                      reply_markup=reply_markup)
-    logger.info(f'Выведен товар с id {query.data}')
-    return 'HANDLE_DESCRIPTION'
+            product_price = product['meta']['display_price']['with_tax']
+            text = f"""\
+            {product['description']}
+            {product_price['formatted']}
+            """
+            try:
+                image_id = product['relationships']['main_image']['data']['id']
+                image_url = online_shop.get_file_href(image_id)
+                context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+                context.bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
+                                       reply_markup=reply_markup)
+            except KeyError:
+                context.bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id,
+                                              message_id=query.message.message_id,
+                                              reply_markup=reply_markup)
+            logger.info(f'Выведен товар с id {query.data}')
+            return 'HANDLE_DESCRIPTION'
 
 
 def handle_description(update, context):
     """Хэндлер для состояния HANDLE_DESCRIPTION.
 
-    Добавляет товар в корзину.
+    Обрабатывает нажатие кнопок в карточке товара.
 
     Args:
         update (:class:`telegram.Update`): Incoming telegram update.
         context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
-        str: состояние HANDLE_DESCRIPTION
+        str: одно из состояний: HANDLE_CART_EDIT, HANDLE_MENU, HANDLE_DESCRIPTION
     """
-    query = update.callback_query
-    product_id, quantity = query.data.split(',')
-    logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
-    online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
-    query.answer('Товар добавлен в корзину')
-    return 'HANDLE_DESCRIPTION'
+    if update.message:
+        return 'HANDLE_DESCRIPTION'
+    if update.callback_query:
+        if update.callback_query.data == 'cart':
+            return handle_cart(update, context)
+        elif update.callback_query.data == 'back':
+            return start(update, context)
+        else:
+            query = update.callback_query
+            product_id, quantity = query.data.split(',')
+            logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
+            online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
+            query.answer('Товар добавлен в корзину')
+            return 'HANDLE_DESCRIPTION'
 
 
 def handle_cart(update, context):
-    """Хэндлер для состояния HANDLE_CART.
+    """Отображение корзины.
 
     Выводит состав корзины и сумму.
 
@@ -119,7 +132,6 @@ def handle_cart(update, context):
     products = online_shop.get_cart_items(query.message.chat.id)
 
     keyboard, text = get_text_and_buttons_for_cart(products)
-
     keyboard.append([get_menu_button()])
     keyboard.append([InlineKeyboardButton('Оплата', callback_data='payment')])
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -131,49 +143,38 @@ def handle_cart(update, context):
     
         Всего: {total}
     '''
-
     context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     update.callback_query.message.reply_text(text=dedent(cart_text), reply_markup=reply_markup)
-
     return 'HANDLE_CART_EDIT'
 
 
 def handle_cart_edit(update, context):
     """Хэндлер для состояния HANDLE_CART_EDIT.
 
-    Удаляет товар из корзины.
+    Обрабатывает нажатие кнопок в корзине.
 
     Args:
         update (:class:`telegram.Update`): Incoming telegram update.
         context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
 
     Returns:
-        str: состояние HANDLE_CART_EDIT
+        str: одно из состояний: HANDLE_MENU, CREATE_CUSTOMER, HANDLE_CART_EDIT
     """
-    query = update.callback_query
-    logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
-    online_shop.remove_product_from_cart(query.message.chat.id, query.data)
-    handle_cart(update, context)
-
-    return 'HANDLE_CART_EDIT'
-
-
-def waiting_email(update, context):
-    """Хэндлер для состояния WAITING_EMAIL.
-
-    Запрашивает email.
-
-    Args:
-        update (:class:`telegram.Update`): Incoming telegram update.
-        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
-
-    Returns:
-        str: состояние CREATE_CUSTOMER
-    """
-    logger.info('Запрашиваем email')
-    update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
-
-    return 'CREATE_CUSTOMER'
+    if update.message:
+        return 'HANDLE_CART_EDIT'
+    if update.callback_query:
+        if update.callback_query.data == 'back':
+            return start(update, context)
+        elif update.callback_query.data == 'payment':
+            logger.info('Запрашиваем email')
+            update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
+            return 'CREATE_CUSTOMER'
+        else:
+            query = update.callback_query
+            logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
+            online_shop.remove_product_from_cart(query.message.chat.id, query.data)
+            handle_cart(update, context)
+            return 'HANDLE_CART_EDIT'
 
 
 def create_customer(update, context):
@@ -188,12 +189,30 @@ def create_customer(update, context):
     Returns:
         str: состояние END
     """
-    message = update.message
-    message.reply_text(text=f'Вы прислали эту почту: {message.text}')
-    logger.info(f'Записываем покупателя с email {message.text}')
-    online_shop.create_customer(message.from_user.first_name, message.text)
+    if update.message:
+        message = update.message
+        message.reply_text(text=f'Вы прислали эту почту: {message.text}')
+        logger.info(f'Записываем покупателя с email {message.text}')
+        online_shop.create_customer(message.from_user.first_name, message.text)
+        return 'END'
 
-    return 'END'
+
+def new_order(update, context):
+    """Хэндлер для состояния END.
+
+    Предлагает начать новый заказ.
+
+    Args:
+        update (:class:`telegram.Update`): Incoming telegram update.
+        context (:class:`telegram.ext.CallbackContext`): The context object passed to the callback.
+
+    Returns:
+        str: состояние END
+    """
+    if update.message:
+        message = update.message
+        message.reply_text(text=f'оформление заказа окончено. Чтобы начать новый заказ введите /start')
+        return 'END'
 
 
 def handle_users_reply(update, context):
@@ -228,12 +247,6 @@ def handle_users_reply(update, context):
         return
     if user_reply == '/start':
         user_state = 'START'
-    elif user_reply == 'back':
-        user_state = 'START'
-    elif user_reply == 'cart':
-        user_state = 'HANDLE_CART'
-    elif user_reply == 'payment':
-        user_state = 'WAITING_EMAIL'
     else:
         user_state = db.get(chat_id).decode('utf-8')
 
@@ -241,10 +254,9 @@ def handle_users_reply(update, context):
         'START': start,
         'HANDLE_MENU': handle_menu,
         'HANDLE_DESCRIPTION': handle_description,
-        'HANDLE_CART': handle_cart,
         'HANDLE_CART_EDIT': handle_cart_edit,
-        'WAITING_EMAIL': waiting_email,
-        'CREATE_CUSTOMER': create_customer
+        'CREATE_CUSTOMER': create_customer,
+        'END': new_order,
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(update, context)
