@@ -11,16 +11,6 @@ _client_id = None
 _headers = None
 
 
-class DuplicateEmail(Exception):
-    def __init__(self, text):
-        self.txt = text
-
-
-def check_for_error(response):
-    if response.status_code == 409:
-        raise DuplicateEmail(response.text)
-
-
 def validate_access_token(fnc):
     @wraps(fnc)
     def wrapped(*args, **kwargs):
@@ -38,7 +28,6 @@ def validate_access_token(fnc):
 def get_all_products():
     logger.info('Получаем список товаров')
     response = requests.get('https://api.moltin.com/v2/products', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
     products_for_menu = []
@@ -56,7 +45,6 @@ def get_all_products():
 def get_product(product_id):
     logger.info(f'Получаем товар с id {product_id}')
     response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
     return review_result['data']
@@ -66,7 +54,6 @@ def get_product(product_id):
 def get_file_href(product_id):
     logger.info(f'Получаем ссылку основного изображения товара с id {product_id}')
     response = requests.get(f'https://api.moltin.com/v2/files/{product_id}', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
     return review_result['data']['link']['href']
@@ -85,7 +72,6 @@ def add_product_to_cart(reference, product_id, quantity):
     }
     logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} в корзину {reference}')
     response = requests.post(f'https://api.moltin.com/v2/carts/{reference}/items/', headers=headers, json=data)
-    check_for_error(response)
     response.raise_for_status()
 
 
@@ -93,7 +79,6 @@ def add_product_to_cart(reference, product_id, quantity):
 def remove_product_from_cart(reference, product_id):
     logger.info(f'Удаляем товар с id {product_id} из корзины {reference}')
     response = requests.delete(f'https://api.moltin.com/v2/carts/{reference}/items/{product_id}', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
 
 
@@ -101,7 +86,6 @@ def remove_product_from_cart(reference, product_id):
 def get_cart(reference):
     logger.info(f'Получаем данные корзины {reference}')
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
     return response.json()
 
@@ -110,7 +94,6 @@ def get_cart(reference):
 def get_cart_items(reference):
     logger.info(f'Получаем товары корзины {reference}')
     response = requests.get(f'https://api.moltin.com/v2/carts/{reference}/items', headers=_headers)
-    check_for_error(response)
     response.raise_for_status()
     review_result = response.json()
     return review_result['data']
@@ -127,7 +110,6 @@ def create_customer(customer_name, customer_email):
     }
     logger.info(f'Создаем покупателя {customer_name}, email: {customer_email}')
     response = requests.post('https://api.moltin.com/v2/customers', headers=_headers, json=data)
-    check_for_error(response)
     response.raise_for_status()
 
 
