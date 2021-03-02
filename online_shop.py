@@ -31,23 +31,6 @@ def validate_access_token(fnc):
         res = fnc(*args, **kwargs)
         return res
 
-        # try:
-        #     res = fnc(*args, **kwargs)
-        #     return res
-        # except InvalidAccessToken:
-        #     # если время действия токена истекло то получаем новый и повторяем вызов функции
-        #     get_access_token()
-        #     res = fnc(*args, **kwargs)
-        #     return res
-        # except DuplicateEmail as e:
-        #     logger.info(e)
-        # except requests.HTTPError as e:
-        #     print(e, file=sys.stderr)
-        #     logger.exception(e)
-        # except requests.ConnectionError as e:
-        #     logger.exception(e)
-        #     print(e, file=sys.stderr)
-
     return wrapped
 
 

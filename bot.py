@@ -269,7 +269,7 @@ def get_database_connection():
 
 
 def handle_error(update, context):
-    logger.warning('Update "%s" caused error "%s"', update)
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
 
 if __name__ == '__main__':
