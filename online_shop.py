@@ -1,10 +1,12 @@
 import logging
 import sys
 from functools import wraps
+import time
 
 import requests
 
 logger = logging.getLogger(__name__)
+_token = None
 _client_id = None
 _headers = None
 
@@ -29,22 +31,29 @@ def check_for_error(response):
 def validate_access_token(fnc):
     @wraps(fnc)
     def wrapped(*args, **kwargs):
-        try:
-            res = fnc(*args, **kwargs)
-            return res
-        except InvalidAccessToken:
-            # если время действия токена истекло то получаем новый и повторяем вызов функции
+        if _token['creation_time'] + _token['expires_in'] < time.time():
+            logger.info('Срок действия токена истекает')
             get_access_token()
-            res = fnc(*args, **kwargs)
-            return res
-        except DuplicateEmail as e:
-            logger.info(e)
-        except requests.HTTPError as e:
-            print(e, file=sys.stderr)
-            logger.exception(e)
-        except requests.ConnectionError as e:
-            logger.exception(e)
-            print(e, file=sys.stderr)
+            set_headers()
+        res = fnc(*args, **kwargs)
+        return res
+
+        # try:
+        #     res = fnc(*args, **kwargs)
+        #     return res
+        # except InvalidAccessToken:
+        #     # если время действия токена истекло то получаем новый и повторяем вызов функции
+        #     get_access_token()
+        #     res = fnc(*args, **kwargs)
+        #     return res
+        # except DuplicateEmail as e:
+        #     logger.info(e)
+        # except requests.HTTPError as e:
+        #     print(e, file=sys.stderr)
+        #     logger.exception(e)
+        # except requests.ConnectionError as e:
+        #     logger.exception(e)
+        #     print(e, file=sys.stderr)
 
     return wrapped
 
@@ -153,15 +162,20 @@ def get_access_token(client_id=None):
         'client_id': _client_id,
         'grant_type': 'implicit'
     }
+
     response = requests.post('https://api.moltin.com/oauth/access_token', data=payload)
     response.raise_for_status()
     review_result = response.json()
-    set_headers(review_result['access_token'])
+
+    global _token
+    _token = review_result
+    _token['expires_in'] = _token['expires_in'] - 10
+    _token['creation_time'] = time.time()
 
 
-def set_headers(access_token):
+def set_headers():
     global _headers
-    _headers = {'Authorization': f'Bearer {access_token}'}
+    _headers = {'Authorization': f'Bearer {_token["access_token"]}'}
 
 
 def set_client_id(client_id=None):

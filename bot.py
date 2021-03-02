@@ -269,7 +269,7 @@ def get_database_connection():
 
 
 def handle_error(update, context):
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logger.warning('Update "%s" caused error "%s"', update)
 
 
 if __name__ == '__main__':
@@ -278,6 +278,7 @@ if __name__ == '__main__':
     load_dotenv()
 
     online_shop.get_access_token(os.environ['STORE_CLIENT_ID'])
+    online_shop.set_headers()
 
     updater = Updater(os.environ['TELEGRAM_TOKEN'])
     dispatcher = updater.dispatcher
