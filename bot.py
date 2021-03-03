@@ -59,32 +59,32 @@ def handle_menu(update, context):
     if update.callback_query:
         if update.callback_query.data == 'cart':
             return handle_cart(update, context)
-        else:
-            query = update.callback_query
-            logger.info(f'Выбран товар с id {query.data}')
-            product = online_shop.get_product(query.data)
 
-            keyboard = get_purchase_options_keyboard(product)
-            keyboard.append([get_cart_button(), get_menu_button()])
-            reply_markup = InlineKeyboardMarkup(keyboard)
+        query = update.callback_query
+        logger.info(f'Выбран товар с id {query.data}')
+        product = online_shop.get_product(query.data)
 
-            product_price = product['meta']['display_price']['with_tax']
-            text = f"""\
-            {product['description']}
-            {product_price['formatted']}
-            """
-            try:
-                image_id = product['relationships']['main_image']['data']['id']
-                image_url = online_shop.get_file_href(image_id)
-                context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
-                context.bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
-                                       reply_markup=reply_markup)
-            except KeyError:
-                context.bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id,
-                                              message_id=query.message.message_id,
-                                              reply_markup=reply_markup)
-            logger.info(f'Выведен товар с id {query.data}')
-            return 'HANDLE_DESCRIPTION'
+        keyboard = get_purchase_options_keyboard(product)
+        keyboard.append([get_cart_button(), get_menu_button()])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        product_price = product['meta']['display_price']['with_tax']
+        text = f"""\
+        {product['description']}
+        {product_price['formatted']}
+        """
+        try:
+            image_id = product['relationships']['main_image']['data']['id']
+            image_url = online_shop.get_file_href(image_id)
+            context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+            context.bot.send_photo(chat_id=query.message.chat_id, photo=image_url, caption=dedent(text),
+                                   reply_markup=reply_markup)
+        except KeyError:
+            context.bot.edit_message_text(text=dedent(text), chat_id=query.message.chat_id,
+                                          message_id=query.message.message_id,
+                                          reply_markup=reply_markup)
+        logger.info(f'Выведен товар с id {query.data}')
+        return 'HANDLE_DESCRIPTION'
 
 
 def handle_description(update, context):
@@ -106,13 +106,13 @@ def handle_description(update, context):
             return handle_cart(update, context)
         elif update.callback_query.data == 'back':
             return start(update, context)
-        else:
-            query = update.callback_query
-            product_id, quantity = query.data.split(',')
-            logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
-            online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
-            query.answer('Товар добавлен в корзину')
-            return 'HANDLE_DESCRIPTION'
+
+        query = update.callback_query
+        product_id, quantity = query.data.split(',')
+        logger.info(f'Добавляем товар с id {product_id} в количестве {quantity} корзину {query.message.chat.id}')
+        online_shop.add_product_to_cart(query.message.chat.id, product_id, int(quantity))
+        query.answer('Товар добавлен в корзину')
+        return 'HANDLE_DESCRIPTION'
 
 
 def handle_cart(update, context):
@@ -169,12 +169,12 @@ def handle_cart_edit(update, context):
             logger.info('Запрашиваем email')
             update.callback_query.message.reply_text(text='Пришлите, пожалуйста, ваш e-mail')
             return 'CREATE_CUSTOMER'
-        else:
-            query = update.callback_query
-            logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
-            online_shop.remove_product_from_cart(query.message.chat.id, query.data)
-            handle_cart(update, context)
-            return 'HANDLE_CART_EDIT'
+
+        query = update.callback_query
+        logger.info(f'Удаляем из корзины {query.message.chat.id} товар с id {query.data}')
+        online_shop.remove_product_from_cart(query.message.chat.id, query.data)
+        handle_cart(update, context)
+        return 'HANDLE_CART_EDIT'
 
 
 def create_customer(update, context):
@@ -209,10 +209,15 @@ def new_order(update, context):
     Returns:
         str: состояние END
     """
+    message_text = 'Оформление заказа окончено. Чтобы начать новый заказ введите /start'
     if update.message:
         message = update.message
-        message.reply_text(text=f'оформление заказа окончено. Чтобы начать новый заказ введите /start')
-        return 'END'
+        message.reply_text(text=message_text)
+    elif update.callback_query:
+        message = update.callback_query.message
+        # context.bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+        message.reply_text(text=message_text)
+    return 'END'
 
 
 def handle_users_reply(update, context):

@@ -14,7 +14,7 @@ def validate_access_token(fnc):
     @wraps(fnc)
     def wrapped(*args, **kwargs):
         if _token['creation_time'] + _token['expires_in'] < time.time():
-            logger.info('Срок действия токена истекает')
+            logger.info('Срок действия токена истекает. Получаем новый токен')
             get_access_token()
             set_headers()
         res = fnc(*args, **kwargs)
