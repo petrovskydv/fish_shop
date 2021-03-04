@@ -215,7 +215,6 @@ def new_order(update, context):
         message.reply_text(text=message_text)
     elif update.callback_query:
         message = update.callback_query.message
-        # context.bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         message.reply_text(text=message_text)
     return 'END'
 
